@@ -4,6 +4,8 @@ Step for restarting a single incomplete ensemble member in-place.
 
 import os
 
+from compass.io import symlink
+from compass.job import write_job_script
 from compass.step import Step
 
 
@@ -98,3 +100,19 @@ class InPlaceRestartMember(Step):
 
         print(f'Setting config_do_restart = .true. in {namelist_path}')
         _set_restart_in_namelist(namelist_path)
+
+        # 128 matches a typical HPC node count; user can override via config
+        self.ntasks = self.config.getint('ensemble', 'ntasks', fallback=128)
+        self.min_tasks = self.ntasks
+
+        run_name = f'run{self.run_num:03}'
+        self.config.set('job', 'job_name', f'uq_{run_name}_restart')
+        machine = self.config.get('deploy', 'machine')
+        write_job_script(self.config, machine,
+                         target_cores=self.ntasks, min_cores=self.min_tasks,
+                         work_dir=self.work_dir)
+
+        if 'LOAD_COMPASS_ENV' in os.environ:
+            script_filename = os.environ['LOAD_COMPASS_ENV']
+            symlink(script_filename, os.path.join(self.work_dir,
+                                                  'load_compass_env.sh'))
