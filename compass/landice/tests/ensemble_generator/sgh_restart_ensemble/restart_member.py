@@ -4,6 +4,7 @@ Step for restarting a single incomplete ensemble member in-place.
 
 import os
 
+from compass.model import run_model
 from compass.step import Step
 
 
@@ -40,8 +41,8 @@ class InPlaceRestartMember(Step):
 
     Rather than copying files to a new directory, this step operates directly
     in the original run directory. It sets ``config_do_restart = .true.`` in
-    ``namelist.landice`` so that the run continues from its last checkpoint
-    when ``job_script.sh`` is resubmitted by ``EnsembleManager``.
+    ``namelist.landice`` and then runs MALI to continue from the last
+    checkpoint.
 
     Attributes
     ----------
@@ -80,7 +81,8 @@ class InPlaceRestartMember(Step):
     def setup(self):
         """
         Edit ``namelist.landice`` in-place in the original run directory,
-        setting ``config_do_restart = .true.``.
+        setting ``config_do_restart = .true.``, and register the MALI
+        executable as an input for this step.
 
         No files are copied and no new subdirectories are created.
         """
@@ -98,3 +100,13 @@ class InPlaceRestartMember(Step):
 
         print(f'Setting config_do_restart = .true. in {namelist_path}')
         _set_restart_in_namelist(namelist_path)
+
+        # Register MALI executable so compass knows this step needs the model
+        self.add_model_as_input()
+
+    def run(self):
+        """
+        Run MALI in the original run directory to continue the simulation
+        from its last checkpoint.
+        """
+        run_model(self)

@@ -15,9 +15,6 @@ import glob
 import json
 import os
 
-from compass.landice.tests.ensemble_generator.ensemble_manager import (
-    EnsembleManager,
-)
 from compass.testcase import TestCase
 
 from .restart_member import InPlaceRestartMember
@@ -42,9 +39,6 @@ class RestartEnsemble(TestCase):
         """
         name = 'sgh_restart_ensemble'
         super().__init__(test_group=test_group, name=name)
-
-        # Add the ensemble manager (handles job submission)
-        self.add_step(EnsembleManager(test_case=self))
 
     def configure(self):
         """
@@ -121,9 +115,6 @@ class RestartEnsemble(TestCase):
                 print(f"  run{run_num:03}: {reason}")
 
         self.restart_run_numbers = restart_runs
-
-        # Only run ensemble_manager; it submits individual restart jobs
-        self.steps_to_run = ['ensemble_manager']
 
     def _should_restart_run(
             self,
