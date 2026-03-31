@@ -11,6 +11,7 @@ Usage:
     compass run -w /work/restart
 """
 
+import configparser
 import glob
 import json
 import os
@@ -60,7 +61,7 @@ class RestartEnsemble(TestCase):
 
         try:
             spinup_work_dir = config.get('restart_ensemble', 'spinup_work_dir')
-        except Exception:
+        except (configparser.NoSectionError, configparser.NoOptionError):
             raise ValueError(
                 "restart_ensemble config must specify spinup_work_dir\n"
                 "Add to config file:\n"
@@ -83,19 +84,19 @@ class RestartEnsemble(TestCase):
         try:
             max_consecutive_restarts = config.getint(
                 'restart_ensemble', 'max_consecutive_restarts')
-        except Exception:
+        except (configparser.NoSectionError, configparser.NoOptionError):
             max_consecutive_restarts = 3
 
         try:
             min_simulation_years = config.getfloat(
                 'restart_ensemble', 'min_simulation_years_before_restart')
-        except Exception:
+        except (configparser.NoSectionError, configparser.NoOptionError):
             min_simulation_years = 50.0
 
         try:
             auto_restart = config.getboolean(
                 'restart_ensemble', 'auto_restart_incomplete')
-        except Exception:
+        except (configparser.NoSectionError, configparser.NoOptionError):
             auto_restart = True
 
         # Scan for existing run directories
