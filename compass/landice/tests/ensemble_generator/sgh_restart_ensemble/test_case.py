@@ -57,9 +57,16 @@ class RestartEnsemble(TestCase):
         4. Sets up ensemble_manager to handle job submission
         """
         config = self.config
-        section = config.get('restart_ensemble', {})
 
-        spinup_work_dir = section.get('spinup_work_dir')
+        try:
+            spinup_work_dir = config.get('restart_ensemble', 'spinup_work_dir')
+        except Exception:
+            raise ValueError(
+                "restart_ensemble config must specify spinup_work_dir\n"
+                "Add to config file:\n"
+                "[restart_ensemble]\n"
+                "spinup_work_dir = /path/to/spinup/ensemble"
+            )
 
         if not spinup_work_dir:
             raise ValueError(
@@ -72,12 +79,24 @@ class RestartEnsemble(TestCase):
         if not os.path.exists(spinup_work_dir):
             raise ValueError(f"spinup_work_dir not found: {spinup_work_dir}")
 
-        # Get restart configuration
-        max_consecutive_restarts = section.getint(
-            'max_consecutive_restarts', 3)
-        min_simulation_years = section.getfloat(
-            'min_simulation_years_before_restart', 50.0)
-        auto_restart = section.getboolean('auto_restart_incomplete', True)
+        # Get restart configuration using proper configparser API
+        try:
+            max_consecutive_restarts = config.getint(
+                'restart_ensemble', 'max_consecutive_restarts')
+        except Exception:
+            max_consecutive_restarts = 3
+
+        try:
+            min_simulation_years = config.getfloat(
+                'restart_ensemble', 'min_simulation_years_before_restart')
+        except Exception:
+            min_simulation_years = 50.0
+
+        try:
+            auto_restart = config.getboolean(
+                'restart_ensemble', 'auto_restart_incomplete')
+        except Exception:
+            auto_restart = True
 
         # Scan for existing run directories
         run_dirs = sorted(glob.glob(os.path.join(spinup_work_dir, 'run*')))
