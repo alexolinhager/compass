@@ -79,21 +79,17 @@ class InPlaceRestartMember(Step):
 
     def setup(self):
         """
-        Prepare the original spinup run directory for an in-place restart.
+        Prepare the original run directory for an in-place restart.
 
-        Uses ``self.spinup_run_dir`` (set in ``__init__``) rather than
-        ``self.work_dir`` so that compass's framework files
-        (``step.pickle``, ``job_script.sh``, etc.) are written into the
-        normal compass step directory and never overwrite the original
-        spinup run directory.  This method:
+        Uses ``self.spinup_run_dir`` (set in ``__init__``) to operate on the
+        original spinup run directory without touching ``self.work_dir``,
+        which compass manages as the normal step directory.
+
+        This method:
 
         1. Verifies the spinup run directory and namelist.landice exist.
         2. Sets config_do_restart = .true. in namelist.landice.
         3. Creates a restart_attempt_N/ tracking directory.
-
-        No files are copied or moved.  Job submission is handled by
-        EnsembleManager using the original job_script.sh that lives in
-        ``self.spinup_run_dir``.
         """
         run_dir = self.spinup_run_dir
 
@@ -110,10 +106,6 @@ class InPlaceRestartMember(Step):
         print(f'Setting config_do_restart = .true. in {namelist_path}')
         _set_restart_in_namelist(namelist_path)
 
-        # Create a restart_attempt_N/ directory to track how many restarts
-        # have been attempted for this run.  configure() counts these dirs
-        # to enforce max_consecutive_restarts.  List the directory once to
-        # find the highest existing attempt number, then create the next one.
         existing_nums = [
             int(d[len('restart_attempt_'):])
             for d in os.listdir(run_dir)
